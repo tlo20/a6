@@ -1,0 +1,8 @@
+body{
+    background-image: url('/images/uploaded/bg.jpg');
+    background-size: cover;
+    color: #332c2c;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #332c2c;
+}
