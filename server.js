@@ -4,15 +4,13 @@
 * No part of this assignment has been copied manually or electronically from any other source
 * (including web sites) or distributed to other students.
 *
-* Name: LO TSZ KIT Student ID: 160067211 Date: 2022/10/26
+* Name: LO TSZ KIT Student ID: 160067211 Date: 2022/11/11
 *
-* https://senecaweba4.herokuapp.com/
-* _______________________________________________________
+* https://uninterested-underclothes-crab.cyclic.app/
+* 
 *
-rynlyfdt
-postgres://rynlyfdt:xri_osgUXTvtCV0kvuz_9ItRhF_UxThb@peanut.db.elephantsql.com/rynlyfdt
-
 ********************************************************************************/
+
 const express = require("express")
 const fs = require("fs")
 let app = express()
