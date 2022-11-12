@@ -1,5 +1,5 @@
 /*********************************************************************************
-* BTI325 – Assignment 4
+* BTI325 – Assignment 5
 * I declare that this assignment is my own work in accordance with Seneca Academic Policy.
 * No part of this assignment has been copied manually or electronically from any other source
 * (including web sites) or distributed to other students.
@@ -9,15 +9,21 @@
 * https://senecaweba4.herokuapp.com/
 * _______________________________________________________
 *
+rynlyfdt
+postgres://rynlyfdt:xri_osgUXTvtCV0kvuz_9ItRhF_UxThb@peanut.db.elephantsql.com/rynlyfdt
+
 ********************************************************************************/
 const express = require("express")
 const fs = require("fs")
 let app = express()
 const path = require("path")
 const port = process.env.PORT || 8080
-let data = require("./data-service")
+let dataService = require("./data-service")
 const multer = require("multer")
 const exphbs = require('express-handlebars')
+
+
+
 
 const storage = multer.diskStorage({
     destination: "./images/uploaded",
@@ -74,24 +80,43 @@ app.get("/employees",(req,res)=>{
     if(filter.length==1){//check if query exists
         switch(filter[0]){
             case "status": 
-                data.getEmployeesByStatus(req.query.status)
-                .then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}));
+            dataService.getEmployeesByStatus(req.query.status)
+                .then(result=>{
+                    res.render("employees",{employees:result})},
+                    err=> res.render("employees",{message:err}))
+                    .catch((err)=>{
+                        res.status(500).send("Unable to get Employee");
+                        });
                 break;
             case "department" : 
-                data.getEmployeesByDepartment(req.query.department)
+            dataService.getEmployeesByDepartment(req.query.department)
                 .then(
                     result=>{res.render("employees",{employees:result})},
-                    err=> res.render("employees",{message:err}));
+                    err=> res.render("employees",{message:err}))
+                    .catch((err)=>{
+                        res.status(500).send("Unable to get Employee");
+                        });
                 break;
             case "manager" : 
-                data.getEmployeesByManager(req.query.manager)
-                .then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}));
+            dataService.getEmployeesByManager(req.query.manager)
+                .then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}))
+                .catch((err)=>{
+                    res.status(500).send("Unable to get Employee");
+                    });
                 break;
             default:
-                data.getAllEmployees().then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}));
+                dataService.getAllEmployees().then(
+                    result=>{res.render("employees",{employees:result})},
+                    err=> res.render("employees",{message:err}))
+                    .catch((err)=>{
+                        res.status(500).send("Unable to get Employee");
+                        });
         }
     }else{
-        data.getAllEmployees().then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}));
+        dataService.getAllEmployees().then(result=>{res.render("employees",{employees:result})},err=> res.render("employees",{message:err}))
+        .catch((err)=>{
+            res.status(500).send("Unable to get Employee");
+            });
     }
     
     
@@ -101,13 +126,19 @@ app.get("/employees",(req,res)=>{
 
 
 app.get("/departments",(req,res)=>{
-
-    data.getDepartments().then(result=>{res.render("departments",{departments:result})},err=> res.render("departments",{message:err}));
+    dataService.getDepartments().then(result=>{res.render("departments",{departments:result})},err=> res.render("departments",{message:err}))
+    .catch((err)=>{
+        res.status(500).send("Unable to get Departments");
+        });
 })
 
 app.get("/employees/add",(req,res)=>{
-    //res.sendFile( path.join(__dirname,"views/addEmployee.html") )
-    res.render('addEmployee')
+    dataService.getDepartments().then(result=>{
+        res.render("addEmployee",{departments:result})},
+        err=> res.render("employee",{message:err}))
+        .catch((err)=>{
+            res.status(500).send("Unable to get Employee");
+            });
 })
 
 app.get("/images/add",(req,res)=>{
@@ -127,33 +158,107 @@ app.get("/images",(req,res)=>{
 })
 
 app.post("/employees/add",(req,res)=>{
-    data.addEmployee(req.body).then(result=>{
+    dataService.addEmployee(req.body).then(result=>{
         res.redirect('/employees')
     },err=>{
         res.send({message:err})
     })
+    .catch((err)=>{
+        res.status(500).send("Unable to get Employee");
+        })
 })
 
-app.get("/employee/:employeeID",(req,res)=>{
-    data.getEmployeeByNum(req.params.employeeID)
-    .then(result=>res.render("employee",{employee:result}),err=> res.render("employee",{message:err}));
-})
+app.get("/employee/:empNum", (req, res) => {
+    // initialize an empty object to store the values
+    let viewData = {};
+    dataService.getEmployeeByNum(req.params.empNum).then((data) => {
+    if (data) {
+    viewData.employee = data; //store employee data in the "viewData" object as "employee"
+    } else {
+    viewData.employee = null; // set employee to null if none were returned
+    }
+    }).catch(() => {
+    viewData.employee = null; // set employee to null if there was an error
+    }).then(dataService.getDepartments)
+    .then((data) => {
+    viewData.departments = data; // store department data in the "viewData" object as "departments"
+    // loop through viewData.departments and once we have found the departmentId that matches
+    // the employee's "department" value, add a "selected" property to the matching
+    // viewData.departments object
+  
+    for (let i = 0; i < viewData.departments.length; i++) {
+    if (viewData.departments[i].departmentId == viewData.employee.department) {
+    viewData.departments[i].selected = true;
+    }
+    }
+    }).catch(() => {
+    viewData.departments = []; // set departments to empty if there was an error
+    }).then(() => {
+    if (viewData.employee == null) { // if no employee - return an error
+    res.status(404).send("Employee Not Found");
+    } else {
+    res.render("employee", { viewData: viewData }); // render the "employee" view
+    }
+    });
+});
 
 app.post("/employee/update",(req,res)=>{
-    data.updateEmployee(req.body)
-    .then(result=> res.redirect("/employees"),err=> res.render("employee",{message:err}));
+    dataService.updateEmployee(req.body)
+    .then(result=> res.redirect("/employees"),err=> res.render("employee",{message:err}))
+    .catch((err)=>{
+        res.status(500).send("Unable to get Employee");
+        });
 })
 
-
-
-/*
-app.get("*",(req,res)=>{
-    res.status(404).send("Page Not Found")
+app.get("/departments/add",(req,res)=>{
+    res.render('addDepartment')
 })
-*/
 
+app.post("/departments/add",(req,res)=>{
+    dataService.addDepartment(req.body).then(result=>{
+        res.redirect('/departments')
+    },err=>{
+        res.send({message:err})
+    })
+    .catch((err)=>{
+        res.status(500).send("Unable to get departments");
+        })
+})
 
-data.initialize().then(result=>{
+app.post("/departments/update",(req,res)=>{
+    dataService.updateDepartment(req.body)
+    .then(result=> res.redirect("/departments"),err=> res.render("department",{message:err}))
+    .catch((err)=>{
+        res.status(500).send("Unable to get departments");
+        });
+})
+
+app.get("/department/:departmentId",(req,res)=>{
+    dataService.getDepartmentById(req.params.departmentId)
+    .then(result=>{
+        if(result!=undefined){
+            res.render("department",{department:result}) 
+        }else{
+            res.status(404).send("Department Not Found")
+        };
+        },
+        err=>{res.status(404).send("Department Not Found")}
+        )
+        .catch((err)=>{
+            res.status(500).send("Unable to get departments");
+            });
+});
+
+app.get("/employees/delete/:empNum",(req,res)=>{
+    dataService.deleteEmployeeByNum(req.params.empNum).then(
+        result=>{res.redirect("/employees")},
+        err=> res.status(500).send("Unable to Remove Employee / Employee not found")
+    ).catch((err)=>{
+        res.status(500).send("Unable to Remove Employee / Employee not found");
+        })
+})
+
+dataService.initialize().then(result=>{
 
     app.listen(port,()=>{
         console.log(`Express http server listening on ${port}`)
