@@ -6,7 +6,7 @@
 *
 * Name: LO TSZ KIT Student ID: 160067211 Date: 2022/11/29
 *
-* https://uninterested-underclothes-crab.cyclic.app/
+* https://eager-school-uniform-calf.cyclic.app
 * 
 *
 ********************************************************************************/
@@ -318,7 +318,7 @@ dataService.initialize()
 })
 
 function ensureLogin(req, res, next) {
-    console.log(req.session)
+   
     if (!req.session.user) {
       res.redirect("/login");
     } else {

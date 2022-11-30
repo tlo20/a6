@@ -47,7 +47,7 @@ function registerUser(userData){
         //Encypt password
         bcrypt.hash(userData.password,10).then(hash=>{
             userData.password=hash
-            console.log(userData)
+           
             //Save new user to db
             let newUser = new User(userData)
             newUser.save().then( result=>{resolve()} )
